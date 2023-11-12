@@ -47,8 +47,6 @@ export default function MapPage() {
   };
 
   async function fetchDetailedAreaData(bounds) {
-    // Construct a query to get areas within the given bounds
-    // The specific query will depend on the tags and details you are interested in
     const query = `[out:json][timeout:25];
       (
         way["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
@@ -75,19 +73,14 @@ export default function MapPage() {
       return processOverpassApiResponse(data);
     } catch (error) {
       console.error('Error fetching detailed area data:', error);
-      return []; // Return an empty array in case of error
+      return []; 
     }
   }
   
   function processOverpassApiResponse(data) {
-    // Process the Overpass API response to extract area details
-    // Here you will need to transform the data into a format suitable for your application
-    // This might involve creating GeoJSON, extracting coordinates, determining area types, etc.
   
-    // As an example, let's say we want to extract polygons for each land use type
     const areas = data.elements.filter(element => element.type === 'way' && element.tags && element.tags.landuse);
     const polygons = areas.map(area => {
-      // Convert node references to actual coordinates
       const coordinates = area.nodes.map(nodeId => {
         const node = data.elements.find(element => element.type === 'node' && element.id === nodeId);
         return [node.lat, node.lon];
@@ -103,12 +96,7 @@ export default function MapPage() {
   }
   
   function determineAreaType(segment) {
-    // Here, we're assuming each segment has a type property that indicates the area type
-    // This would have been set in the processOverpassApiResponse function
     const type = segment.type;
-  
-    // You could have a more complex logic here if needed
-    // For example, checking additional tags, combining types, etc.
   
     return type;
   }
@@ -123,7 +111,6 @@ export default function MapPage() {
       const detailedAreaData = await fetchDetailedAreaData(bounds);
       const segments = segmentRectangle(detailedAreaData);
 
-      // Set the new polygons in the state to be rendered
       const newPolygons = segments.map(segment => {
         const areaType = determineAreaType(segment);
         const color = determineColor(areaType);
@@ -146,42 +133,31 @@ export default function MapPage() {
   };
 
   function determineColor(areaType) {
-    // Define a mapping of area types to colors
     const colorMapping = {
       residential: 'blue',
       commercial: 'red',
       industrial: 'orange',
       park: 'green',
       farmland: 'yellow',
-      default: 'grey', // default color if areaType is not recognized
+      default: 'grey',
     };
   
-    // Return the color corresponding to the areaType, or the default color
     return colorMapping[areaType] || colorMapping.default;
   }
 
   function segmentRectangle(detailedAreaData) {
-    // This function assumes that detailedAreaData is an array of objects
-    // where each object represents an area with a type and coordinates.
   
-    // Segmentation logic goes here. For example, you might want to group areas by type:
     const segmentsByType = detailedAreaData.reduce((acc, area) => {
-      // Initialize an array in the accumulator if it doesn't exist for this type
       if (!acc[area.type]) {
         acc[area.type] = [];
       }
   
-      // Add the area to the array for its type
       acc[area.type].push(area.coordinates);
   
       return acc;
     }, {});
   
-    // Convert the segments by type into an array of segment objects
     const segments = Object.entries(segmentsByType).map(([type, coordinatesArray]) => {
-      // You might want to merge coordinates or perform other operations
-      // to ensure each segment is represented the way you need it for drawing.
-      // For simplicity, this example just uses the arrays of coordinates as-is.
   
       return {
         type: type,
