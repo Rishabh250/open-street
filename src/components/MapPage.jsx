@@ -40,6 +40,8 @@ export default function MapPage() {
   const [areaData, setAreaData] = useState(null);
   const [riskScore, setRiskScore] = useState(null);
   const [flightTime, setFlightTime] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const riskWeights = {
     road: 1.5,
@@ -157,6 +159,7 @@ export default function MapPage() {
     }
     if (layerType === 'polyline') {
       const latlngs = layer.getLatLngs();
+      layer.setStyle({ color: 'black' });
       setCoordinates(latlngs.map((latlng) => [latlng.lat, latlng.lng]));
     }
   };
@@ -249,23 +252,32 @@ export default function MapPage() {
       alert('Please draw a shape on the map first.');
       return;
     }
-
+  
+    setIsLoading(true);
+  
     const bounds = layers.getBounds();
-    const detailedAreaData = await fetchDetailedAreaData(bounds);
-    setAreaData(detailedAreaData);
-    const segments = segmentRectangle(detailedAreaData);
-
-    const newPolygons = segments.map(segment => {
-      const areaType = determineAreaType(segment);
-      const color = determineColor(areaType);
-      return {
-        positions: segment.coordinates,
-        color: color,
-      };
-    });
-
-    setPolygons(newPolygons);
-  }; 
+    try {
+      const detailedAreaData = await fetchDetailedAreaData(bounds);
+      setAreaData(detailedAreaData);
+      const segments = segmentRectangle(detailedAreaData);
+  
+      const newPolygons = segments.map(segment => {
+        const areaType = determineAreaType(segment);
+        const color = determineColor(areaType);
+        return {
+          positions: segment.coordinates,
+          color: color,
+        };
+      });
+  
+      setPolygons(newPolygons);
+    } catch (error) {
+      console.error('Error while getting ground profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   function calculateTotalDistance(flightPath) {
     let totalDistance = 0;
@@ -378,6 +390,9 @@ export default function MapPage() {
         </div>
       </div>
       <div className="flex flex-col w-full max-w-screen-lg mt-4">
+      {isLoading && (
+      <p>Loading Ground Profile...</p>
+    )}
       {riskScore !== null && (
           <p className="text-lg">Risk Score: {riskScore.toFixed(2)}</p>
         )}
