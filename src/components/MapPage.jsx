@@ -132,12 +132,44 @@ export default function MapPage() {
   
     return polygons;
   }
+
+  function isPointInPolygon(point, polygon) {
+    let x = point[0], y = point[1];
   
-  function determineAreaType(segment) {
-    const type = segment.type;
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      let xi = polygon[i][0], yi = polygon[i][1];
+      let xj = polygon[j][0], yj = polygon[j][1];
   
-    return type;
+      let intersect = ((yi > y) != (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+  
+    return inside;
   }
+  
+  
+  function determineAreaType(segment, areaData) {
+
+    if ( areaData ) {
+      for (const area of areaData) {
+        const { coordinates, type } = area;
+    
+        if (isPointInPolygon(segment, coordinates)) {
+          return type;
+        }
+      }
+    
+      return 'unknown';
+    }
+
+    const type = segment.type;
+
+    return type;
+   
+  }
+  
   
 
   const onCreated = async (e) => {
@@ -162,10 +194,6 @@ export default function MapPage() {
       layer.setStyle({ color: 'black' });
       setCoordinates(latlngs.map((latlng) => [latlng.lat, latlng.lng]));
     }
-  };
-
-  const clearFlightPath = () => {
-    setFlightPath(null);
   };
 
   function determineColor(areaType) {
@@ -291,11 +319,10 @@ export default function MapPage() {
     let weightedDistance = 0;
     let totalDistance = 0;
     
-    // Assuming areaData contains {type: string, coordinates: [lat, lon], riskWeight: number}
     flightPath.forEach((segment, index) => {
       if (index < flightPath.length - 1) {
         const segmentDistance = calculateDistance(segment, flightPath[index + 1]);
-        const areaType = determineAreaType(segment, areaData); // Implement this function
+        const areaType = determineAreaType(segment, areaData);
         const riskWeight = riskWeights[areaType] || 1;
         weightedDistance += segmentDistance * riskWeight;
         totalDistance += segmentDistance;
