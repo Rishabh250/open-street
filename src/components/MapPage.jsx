@@ -131,7 +131,7 @@ export default function MapPage({ handleGroundClick }) {
     education: 'darkgrey',
     scrub: 'darkgrey',
     dead_allotments: 'darkgrey',
-    hospital: 'darkred',
+    hospital: 'white',
     parking: 'darkorange',
     retail: 'darkorange',
     yes: 'yellow',
