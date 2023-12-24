@@ -5,6 +5,9 @@ import 'leaflet-geosearch/assets/css/leaflet.css';
 import 'leaflet-geosearch/assets/css/leaflet.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import { db } from '../../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import L from 'leaflet';
 
 let EditControl;
 if (typeof window !== 'undefined') {
@@ -28,12 +31,9 @@ function Search() {
   return null;
 }
 
-export default function MapPage() {
+export default function MapPage({ handleGroundClick }) {
 
   const [coordinates, setCoordinates] = useState(null);
-  const [savedData, setSavedData] = useState({
-    coordinates: JSON.parse(localStorage.getItem('mapCoordinates')) || []
-  });
   const [layers, setLayer] = useState(null);
   const [polygons, setPolygons] = useState([]);
   const [flightPath, setFlightPath] = useState(null);
@@ -41,6 +41,47 @@ export default function MapPage() {
   const [riskScore, setRiskScore] = useState(null);
   const [flightTime, setFlightTime] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [layersCord, setLayerCord] = useState(null);
+
+  useEffect(() => {
+
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    const fetchGroundProfile = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const docRef = doc(db, 'userGroundProfiles', `${user.uid}`);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+
+            const { layers, riskScore, flightTime, coordinates } = data;
+
+            const cords = JSON.parse(coordinates);
+
+
+            setIsLoading(true);
+            setRiskScore(riskScore);
+            setFlightTime(flightTime);
+            setCoordinates(JSON.parse(coordinates));
+            if (layers) {
+              handleGroundDetails({ fetchedLayers: layers });
+            }
+            setIsLoading(false);
+
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching ground profile: ", error);
+        }
+      }
+    };
+
+    fetchGroundProfile();
+  }, []);
 
 
   const riskWeights = {
@@ -71,18 +112,10 @@ export default function MapPage() {
     grass: 0.8,
   };
 
-
-  useEffect(() => {
-    if (savedData.coordinates.length) {
-      setCoordinates(savedData.coordinates);
-    }
-  }, []);
-
-  const clearPolygons = () => {
-    setPolygons([]);
-  };
-
   async function fetchDetailedAreaData(bounds) {
+
+    console.log(bounds);
+
     const query = `[out:json][timeout:25];
       (
         way["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
@@ -170,12 +203,9 @@ export default function MapPage() {
    
   }
   
-  
-
   const onCreated = async (e) => {
     setCoordinates(null);
     const { layerType, layer } = e;
-
     if (layerType === 'polyline') {
       const latlngs = layer.getLatLngs();
       const gpsPoints = latlngs.map((latlng) => [latlng.lat, latlng.lng]);
@@ -275,17 +305,48 @@ export default function MapPage() {
     return segments;
   }
 
-  const handleGroundDetails = async () => {
-    if (!layers) {
+  const convertToLatLngBounds = (boundsData) => {
+    if (!boundsData || !boundsData._southWest || !boundsData._northEast) {
+      console.error("Invalid bounds data: missing properties");
+      return null;
+    }
+  
+    const { lat: swLat, lng: swLng } = boundsData._southWest;
+    const { lat: neLat, lng: neLng } = boundsData._northEast;
+  
+    if (typeof swLat !== 'number' || typeof swLng !== 'number' || typeof neLat !== 'number' || typeof neLng !== 'number') {
+      console.error("Invalid bounds data: coordinates are not numbers");
+      return null;
+    }
+  
+    return L.latLngBounds([boundsData._southWest, boundsData._northEast]);
+  };
+
+  const handleGroundDetails = async ({ fetchedLayers }) => {
+
+    setIsLoading(true);
+
+    const layer = layers || fetchedLayers;
+
+    if (!layer) {
       alert('Please draw a shape on the map first.');
       return;
     }
-  
-    setIsLoading(true);
-  
-    const bounds = layers.getBounds();
+    
+    const bounds = fetchedLayers ? fetchedLayers.bounds : layers.getBounds();
+
+    setLayerCord({
+      bounds: {
+        _southWest: { lat: bounds._southWest.lat, lng: bounds._southWest.lng },
+        _northEast: { lat: bounds._northEast.lat, lng: bounds._northEast.lng }
+      },
+      layerType: 'rectangle'
+    });
+    
     try {
-      const detailedAreaData = await fetchDetailedAreaData(bounds);
+      const latLngBounds = convertToLatLngBounds(bounds) || bounds;
+
+      const detailedAreaData = await fetchDetailedAreaData(latLngBounds);
       setAreaData(detailedAreaData);
       const segments = segmentRectangle(detailedAreaData);
   
@@ -299,6 +360,7 @@ export default function MapPage() {
       });
   
       setPolygons(newPolygons);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error while getting ground profile:', error);
     } finally {
@@ -358,16 +420,10 @@ export default function MapPage() {
     return totalDistance / speed; // time in seconds
   }
   
-
   const handleSave = async () => {
 
-    localStorage.setItem('mapCoordinates', JSON.stringify(coordinates));
-    setSavedData({
-      coordinates: coordinates
-    });
-
     if (!coordinates) {
-      alert('Please draw a shape on the map first.');
+      alert('Please draw a coordinates on the map first.');
       return;
     }
 
@@ -376,13 +432,11 @@ export default function MapPage() {
 
     setRiskScore(riskScore);
     setFlightTime(flightTime);
+    handleGroundClick({ riskScore, flightTime, layers: layersCord, coordinates });
   };
 
   const handleDelete = () => {
     localStorage.removeItem('mapCoordinates');
-    setSavedData({
-      coordinates: []
-    });
     setCoordinates(null);
   };
 
@@ -428,7 +482,7 @@ export default function MapPage() {
         )}
         <h2 className="text-xl font-bold mb-2">Saved Data:</h2>
         <pre className="bg-gray-200 p-4 rounded-md overflow-auto">
-          {JSON.stringify(savedData.coordinates, null, 2)}
+          {JSON.stringify(coordinates, null, 2)}
         </pre>
       </div>
     </div>
