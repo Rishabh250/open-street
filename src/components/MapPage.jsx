@@ -83,6 +83,77 @@ export default function MapPage({ handleGroundClick }) {
     fetchGroundProfile();
   }, []);
 
+  
+  const colorMapping = {
+    road: 'red',
+    residential: 'yellow',
+    commercial: 'yellow',
+    park: 'green',
+    pond: 'green',
+    farmland: 'green',
+    infrastructure: 'darkgrey',
+    jail: 'darkgrey',
+    stadium: 'darkgrey',
+    school: 'darkgrey',
+    retail: 'yellow',
+    governmental: 'yellow',
+    village_green: 'yellow',
+    courtyard: 'yellow',
+    garages: 'yellow',
+    mixed: 'yellow',
+    yard: 'yellow',
+    plaza: 'green',
+    recreation_ground: 'green',
+    leisure: 'green',
+    meadow: 'green',
+    flowerbed: 'green',
+    greenfield: 'green',
+    forest: 'green',
+    farmyard: 'green',
+    allotments: 'green',
+    plant_nursery: 'green',
+    grass: 'green',
+    orchard: 'green',
+    apiary: 'green',
+    animal_keeping: 'green',
+    greenhouse_horticulture: 'green',
+    bed: 'green',
+    industrial: 'yellow',
+    construction: 'yellow',
+    planned_construction: 'yellow', 
+    brownfield: 'yellow', 
+    depot: 'yellow', 
+    cemetery: 'darkgrey',
+    churchyard: 'darkgrey',
+    military: 'darkgrey',
+    railway: 'darkgrey',
+    religious: 'darkgrey',
+    education: 'darkgrey',
+    scrub: 'darkgrey',
+    dead_allotments: 'darkgrey',
+    hospital: 'darkred',
+    parking: 'darkorange',
+    retail: 'darkorange',
+    yes: 'yellow',
+    motorway: 'red',
+    motorway_link: 'red',
+    service: 'red',
+    tertiary: 'red',
+    secondary: 'red',
+    trunk_link: 'red',
+    trunk: 'red',
+    unclassified: 'red',
+    primary: 'red',
+    secondary_link: 'red',
+    cycleway: 'red',
+    footway: 'red',
+    abandoned: 'red',
+    light_rail: 'red',
+    rail: 'red',
+    second_hand: 'red',
+    default: 'transparent',
+  };
+
 
   const riskWeights = {
     road: 1.5,
@@ -110,20 +181,124 @@ export default function MapPage({ handleGroundClick }) {
     governmental: 1.0,
     jail: 1.0,
     grass: 0.8,
+    scrub: 0.8,
+    plaza: 0.9,
+    recreation_ground: 0.8,
+    leisure: 0.8,
+    meadow: 0.7,
+    flowerbed: 0.7,
+    greenfield: 0.7,
+    farmyard: 0.7,
+    allotments: 0.7,
+    plant_nursery: 0.7,
+    orchard: 0.7,
+    apiary: 0.7,
+    animal_keeping: 0.7,
+    greenhouse_horticulture: 0.7,
+    bed: 0.7,
+    village_green: 1.0,
+    courtyard: 1.0,
+    garages: 1.0,
+    mixed: 1.0,
+    yard: 1.0,
+    brownfield: 1.4,
+    depot: 1.4,
+    parking: 1.3,
+    retail: 1.3,
+    motorway: 1.8,
+    motorway_link: 1.8,
+    service: 1.2,
+    tertiary: 1.2,
+    secondary: 1.3,
+    trunk_link: 1.5,
+    trunk: 1.5,
+    unclassified: 1.1,
+    primary: 1.4,
+    secondary_link: 1.3,
+    cycleway: 0.9,
+    footway: 0.9,
+    abandoned: 1.0,
+    light_rail: 1.6,
+    rail: 1.6,
+    second_hand: 1.0,
+    default: 1.0,
   };
 
   async function fetchDetailedAreaData(bounds) {
 
-    console.log(bounds);
-
     const query = `[out:json][timeout:25];
-      (
-        way["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-        relation["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-        way["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-        relation["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      );
-      out body; >; out skel qt;`;
+    (
+      // Primary roads within the bounding box
+      way["highway"="primary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["highway"="primary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+
+      // Secondary roads within the bounding box
+      way["highway"="secondary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["highway"="secondary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+
+      // Land use data
+      way["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Highway data
+      way["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Natural features
+      way["natural"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["natural"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Amenities
+      way["amenity"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["amenity"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Leisure areas
+      way["leisure"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["leisure"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Buildings
+      way["building"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["building"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Railway data
+      way["railway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["railway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Aeroway data
+      way["aeroway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["aeroway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Waterway data
+      way["waterway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["waterway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Tourism data
+      way["tourism"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["tourism"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Historic data
+      way["historic"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["historic"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Shop data
+      way["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      // Hospitals
+      node["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    
+      // Parking areas
+      node["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      
+      // Roads (general query for all types of roads)
+      way["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      relation["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+    );
+    out body; >; out skel qt;`;
+    
   
     const overpassUrl = 'https://overpass-api.de/api/interpreter';
   
@@ -149,22 +324,30 @@ export default function MapPage({ handleGroundClick }) {
   }
   
   function processOverpassApiResponse(data) {
-  
-    const areas = data.elements.filter(element => element.type === 'way' && element.tags && element.tags.landuse);
-    const polygons = areas.map(area => {
-      const coordinates = area.nodes.map(nodeId => {
-        const node = data.elements.find(element => element.type === 'node' && element.id === nodeId);
-        return [node.lat, node.lon];
-      });
-  
-      return {
-        type: area.tags.landuse,
-        coordinates: coordinates,
-      };
+    let features = [];
+
+    const types = ['landuse', 'highway', 'amenity', 'natural', 'leisure', 'building', 'railway', 'aeroway', 'waterway', 'tourism', 'historic', 'shop', 
+    'amenity', 'hospital', 'parking', 'highway'];
+    types.forEach(type => {
+        const elements = data.elements.filter(element => element.type === 'way' && element.tags && element.tags[type]);
+        elements.forEach(element => {
+            const coordinates = element.nodes.map(nodeId => {
+                const node = data.elements.find(e => e.type === 'node' && e.id === nodeId);
+                return node ? [node.lat, node.lon] : null;
+            }).filter(coord => !!coord);
+
+            if (coordinates.length > 0) {
+                features.push({
+                    type: element.tags[type],
+                    coordinates: coordinates,
+                });
+            }
+        });
     });
-  
-    return polygons;
-  }
+
+    return features;
+}
+
 
   function isPointInPolygon(point, polygon) {
     let x = point[0], y = point[1];
@@ -198,8 +381,6 @@ export default function MapPage({ handleGroundClick }) {
     }
 
     const type = segment.type;
-    console.log(type)
-
     return type;
    
   }
@@ -215,6 +396,7 @@ export default function MapPage({ handleGroundClick }) {
     }
 
     if (layerType === 'polygon') {
+      layer.setStyle({ color: 'black' });
       setLayer(layer);
     }
     if ([ 'circle', 'circlemarker','marker'].includes(layerType)) {
@@ -229,58 +411,7 @@ export default function MapPage({ handleGroundClick }) {
   };
 
   function determineColor(areaType) {
-  
-    const colorMapping = {
-      road: 'red',
-      residential: 'yellow',
-      commercial: 'yellow',
-      park: 'green',
-      pond: 'green',
-      farmland: 'green',
-      infrastructure: 'darkgrey',
-      jail: 'darkgrey',
-      stadium: 'darkgrey',
-      school: 'darkgrey',
-      retail: 'yellow',
-      hospitality: 'yellow',
-      governmental: 'yellow',
-      village_green: 'yellow',
-      courtyard: 'yellow',
-      garages: 'yellow',
-      mixed: 'yellow',
-      yard: 'yellow',
-      plaza: 'green',
-      recreation_ground: 'green',
-      leisure: 'green',
-      meadow: 'green',
-      flowerbed: 'green',
-      greenfield: 'green',
-      forest: 'green',
-      farmyard: 'green',
-      allotments: 'green',
-      plant_nursery: 'green',
-      grass: 'green',
-      orchard: 'green',
-      apiary: 'green',
-      animal_keeping: 'green',
-      greenhouse_horticulture: 'green',
-      bed: 'green',
-      industrial: 'yellow',
-      construction: 'yellow',
-      planned_construction: 'yellow', 
-      brownfield: 'yellow', 
-      depot: 'yellow', 
-      cemetery: 'darkgrey',
-      churchyard: 'darkgrey',
-      military: 'darkgrey',
-      railway: 'darkgrey',
-      religious: 'darkgrey',
-      education: 'darkgrey',
-      scrub: 'darkgrey',
-      dead_allotments: 'darkgrey',
-      default: 'grey',
-    };
-  
+
     return colorMapping[areaType] || colorMapping.default;
   }
   
@@ -482,57 +613,19 @@ export default function MapPage({ handleGroundClick }) {
         {flightTime !== null && (
           <p className="text-lg">Flight Time: {flightTime.toFixed(2)} seconds</p>
         )}
-        <pre className="bg-gray-200 p-4 rounded-md overflow-auto">
-          <div className='grid grid-cols-3 gap-4'>
-            <p>Residential: yellow</p>
-            <p>Commercial: yellow</p>
-            <p>Park: green</p>
-            <p>Pond: green</p>
-            <p>Farmland: green</p>
-            <p>Infrastructure: darkgrey</p>
-            <p>Jail: darkgrey</p>
-            <p>Stadium: darkgrey</p>
-            <p>School: darkgrey</p>
-            <p>Retail: yellow</p>
-            <p>Hospitality: yellow</p>
-            <p>Governmental: yellow</p>
-            <p>Village_green: yellow</p>
-            <p>Courtyard: yellow</p>
-            <p>Garages: yellow</p>
-            <p>Mixed: yellow</p>
-            <p>Yard: yellow</p>
-            <p>Plaza: green</p>
-            <p>Recreation_ground: green</p>
-            <p>Leisure: green</p>
-            <p>Meadow: green</p>
-            <p>Flowerbed: green</p>
-            <p>Greenfield: green</p>
-            <p>Forest: green</p>
-            <p>Farmyard: green</p>
-            <p>Allotments: green</p>
-            <p>Plant_nursery: green</p>
-            <p>Grass: green</p>
-            <p>Orchard: green</p>
-            <p>Apiary: green</p>
-            <p>Animal_keeping: green</p>
-            <p>Greenhouse_horticulture: green</p>
-            <p>Bed: green</p>
-            <p>Industrial: yellow</p>
-            <p>Construction: yellow</p>
-            <p>Planned_construction: yellow</p>
-            <p>Brownfield: yellow</p>
-            <p>Depot: yellow</p>
-            <p>Cemetery: darkgrey</p>
-            <p>Churchyard: darkgrey</p>
-            <p>Military: darkgrey</p>
-            <p>Railway: darkgrey</p>
-            <p>Religious: darkgrey</p>
-            <p>Education: darkgrey</p>
-            <p>Scrub: darkgrey</p>
-            <p>Dead_allotments: darkgrey</p>
-            <p>Default: grey</p>
-          </div>
-        </pre>
+ <pre className="bg-gray-200 p-4 rounded-md overflow-auto w-full">
+  <div className='grid grid-cols-6 md:grid-cols-4 gap-4 w-full'>
+    {
+      colorMapping && Object.keys(colorMapping).map((key, index) => (
+        <div key={index} className="flex flex-col">
+          <div className="w-4 h-4 rounded-full mb-1" style={{ backgroundColor: colorMapping[key] }}></div>
+          <p className="text-xs whitespace-normal">{key}</p>
+        </div>
+      ))
+    }
+  </div>
+</pre>
+
       </div>
     </div>
   );
