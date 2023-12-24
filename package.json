@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "firebase": "^10.7.1",
+    "flatted": "^3.2.9",
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "leaflet-color-markers": "^0.1.0",
