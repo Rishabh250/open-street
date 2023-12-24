@@ -198,6 +198,7 @@ export default function MapPage({ handleGroundClick }) {
     }
 
     const type = segment.type;
+    console.log(type)
 
     return type;
    
@@ -206,13 +207,14 @@ export default function MapPage({ handleGroundClick }) {
   const onCreated = async (e) => {
     setCoordinates(null);
     const { layerType, layer } = e;
+
     if (layerType === 'polyline') {
       const latlngs = layer.getLatLngs();
       const gpsPoints = latlngs.map((latlng) => [latlng.lat, latlng.lng]);
       setFlightPath(gpsPoints);
     }
 
-    if (layerType === 'rectangle') {
+    if (layerType === 'polygon') {
       setLayer(layer);
     }
     if ([ 'circle', 'circlemarker','marker'].includes(layerType)) {
@@ -340,7 +342,7 @@ export default function MapPage({ handleGroundClick }) {
         _southWest: { lat: bounds._southWest.lat, lng: bounds._southWest.lng },
         _northEast: { lat: bounds._northEast.lat, lng: bounds._northEast.lng }
       },
-      layerType: 'rectangle'
+      layerType: 'polygon'
     });
     
     try {
@@ -451,7 +453,7 @@ export default function MapPage({ handleGroundClick }) {
               position="topright"
               onCreated={onCreated}
               draw={{
-                rectangle: true,
+                rectangle: false,
                 circle: false,
                 circlemarker: false,
                 polyline: true,
@@ -480,9 +482,56 @@ export default function MapPage({ handleGroundClick }) {
         {flightTime !== null && (
           <p className="text-lg">Flight Time: {flightTime.toFixed(2)} seconds</p>
         )}
-        <h2 className="text-xl font-bold mb-2">Saved Data:</h2>
         <pre className="bg-gray-200 p-4 rounded-md overflow-auto">
-          {JSON.stringify(coordinates, null, 2)}
+          <div className='grid grid-cols-3 gap-4'>
+            <p>Residential: yellow</p>
+            <p>Commercial: yellow</p>
+            <p>Park: green</p>
+            <p>Pond: green</p>
+            <p>Farmland: green</p>
+            <p>Infrastructure: darkgrey</p>
+            <p>Jail: darkgrey</p>
+            <p>Stadium: darkgrey</p>
+            <p>School: darkgrey</p>
+            <p>Retail: yellow</p>
+            <p>Hospitality: yellow</p>
+            <p>Governmental: yellow</p>
+            <p>Village_green: yellow</p>
+            <p>Courtyard: yellow</p>
+            <p>Garages: yellow</p>
+            <p>Mixed: yellow</p>
+            <p>Yard: yellow</p>
+            <p>Plaza: green</p>
+            <p>Recreation_ground: green</p>
+            <p>Leisure: green</p>
+            <p>Meadow: green</p>
+            <p>Flowerbed: green</p>
+            <p>Greenfield: green</p>
+            <p>Forest: green</p>
+            <p>Farmyard: green</p>
+            <p>Allotments: green</p>
+            <p>Plant_nursery: green</p>
+            <p>Grass: green</p>
+            <p>Orchard: green</p>
+            <p>Apiary: green</p>
+            <p>Animal_keeping: green</p>
+            <p>Greenhouse_horticulture: green</p>
+            <p>Bed: green</p>
+            <p>Industrial: yellow</p>
+            <p>Construction: yellow</p>
+            <p>Planned_construction: yellow</p>
+            <p>Brownfield: yellow</p>
+            <p>Depot: yellow</p>
+            <p>Cemetery: darkgrey</p>
+            <p>Churchyard: darkgrey</p>
+            <p>Military: darkgrey</p>
+            <p>Railway: darkgrey</p>
+            <p>Religious: darkgrey</p>
+            <p>Education: darkgrey</p>
+            <p>Scrub: darkgrey</p>
+            <p>Dead_allotments: darkgrey</p>
+            <p>Default: grey</p>
+          </div>
         </pre>
       </div>
     </div>
