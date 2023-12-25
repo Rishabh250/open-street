@@ -86,15 +86,23 @@ export default function MapPage({ handleGroundClick }) {
   
   const colorMapping = {
     road: 'red',
+    motorway: 'red',
+    motorway_link: 'red',
+    service: 'red',
+    tertiary: 'red',
+    trunk_link: 'red',
+    trunk: 'red',
+    unclassified: 'red',
+    primary: 'red',
+    secondary_link: 'red',
+    cycleway: 'red',
+    footway: 'red',
+    abandoned: 'red',
+    light_rail: 'red',
+    rail: 'red',
+    second_hand: 'red',
     residential: 'yellow',
     commercial: 'yellow',
-    park: 'green',
-    pond: 'green',
-    farmland: 'green',
-    infrastructure: 'darkgrey',
-    jail: 'darkgrey',
-    stadium: 'darkgrey',
-    school: 'darkgrey',
     retail: 'yellow',
     governmental: 'yellow',
     village_green: 'yellow',
@@ -102,6 +110,16 @@ export default function MapPage({ handleGroundClick }) {
     garages: 'yellow',
     mixed: 'yellow',
     yard: 'yellow',
+    industrial: 'yellow',
+    construction: 'yellow',
+    planned_construction: 'yellow',
+    brownfield: 'yellow',
+    depot: 'yellow',
+    yes: 'yellow',
+    secondary: 'yellow',
+    park: 'green',
+    pond: 'green',
+    farmland: 'green',
     plaza: 'green',
     recreation_ground: 'green',
     leisure: 'green',
@@ -118,11 +136,10 @@ export default function MapPage({ handleGroundClick }) {
     animal_keeping: 'green',
     greenhouse_horticulture: 'green',
     bed: 'green',
-    industrial: 'yellow',
-    construction: 'yellow',
-    planned_construction: 'yellow', 
-    brownfield: 'yellow', 
-    depot: 'yellow', 
+    infrastructure: 'darkgrey',
+    jail: 'darkgrey',
+    stadium: 'darkgrey',
+    school: 'darkgrey',
     cemetery: 'darkgrey',
     churchyard: 'darkgrey',
     military: 'darkgrey',
@@ -131,28 +148,11 @@ export default function MapPage({ handleGroundClick }) {
     education: 'darkgrey',
     scrub: 'darkgrey',
     dead_allotments: 'darkgrey',
-    hospital: 'white',
     parking: 'darkorange',
-    retail: 'darkorange',
-    yes: 'yellow',
-    motorway: 'red',
-    motorway_link: 'red',
-    service: 'red',
-    tertiary: 'red',
-    secondary: 'red',
-    trunk_link: 'red',
-    trunk: 'red',
-    unclassified: 'red',
-    primary: 'red',
-    secondary_link: 'red',
-    cycleway: 'red',
-    footway: 'red',
-    abandoned: 'red',
-    light_rail: 'red',
-    rail: 'red',
-    second_hand: 'red',
-    default: 'transparent',
+    hospital: 'white',
+    default: 'transparent'
   };
+  
 
 
   const riskWeights = {
@@ -226,76 +226,80 @@ export default function MapPage({ handleGroundClick }) {
 
   async function fetchDetailedAreaData(bounds) {
 
+    const polygonCoords = [].concat(...coordinates.map(coord => [coord.lat, coord.lng]));
+
+    const polygonString = polygonCoords.join(' ');
+
     const query = `[out:json][timeout:25];
     (
       // Primary roads within the bounding box
-      way["highway"="primary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["highway"="primary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["primary"];
+      relation(poly:"${polygonString}")["primary"];
 
       // Secondary roads within the bounding box
-      way["highway"="secondary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["highway"="secondary"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["secondary"];
+      relation(poly:"${polygonString}")["secondary"];
 
       // Land use data
-      way["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["landuse"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["landuse"];
+      relation(poly:"${polygonString}")["landuse"];
     
       // Highway data
-      way["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["highway"];
+      relation(poly:"${polygonString}")["highway"];
     
       // Natural features
-      way["natural"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["natural"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["natural"];
+      relation(poly:"${polygonString}")["natural"];
     
       // Amenities
-      way["amenity"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["amenity"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["amenity"];
+      relation(poly:"${polygonString}")["amenity"];
     
       // Leisure areas
-      way["leisure"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["leisure"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["leisure"];
+      relation(poly:"${polygonString}")["leisure"];
     
       // Buildings
-      way["building"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["building"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["building"];
+      relation(poly:"${polygonString}")["building"];
     
       // Railway data
-      way["railway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["railway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["railway"];
+      relation(poly:"${polygonString}")["railway"];
     
       // Aeroway data
-      way["aeroway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["aeroway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["aeroway"];
+      relation(poly:"${polygonString}")["aeroway"];
     
       // Waterway data
-      way["waterway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["waterway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["waterway"];
+      relation(poly:"${polygonString}")["waterway"];
     
       // Tourism data
-      way["tourism"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["tourism"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["tourism"];
+      relation(poly:"${polygonString}")["tourism"];
     
       // Historic data
-      way["historic"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["historic"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["historic"];
+      relation(poly:"${polygonString}")["historic"];
     
       // Shop data
-      way["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["shop"];
+      relation(poly:"${polygonString}")["shop"];
       // Hospitals
-      node["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      way["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["amenity"="hospital"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      node(poly:"${polygonString}")["amenity"="hospital"];
+      way(poly:"${polygonString}")["amenity"="hospital"];
+      relation(poly:"${polygonString}")["amenity"="hospital"];
     
       // Parking areas
-      node["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      way["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["amenity"="parking"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      node(poly:"${polygonString}")["amenity"="parking"];
+      way(poly:"${polygonString}")["amenity"="parking"];
+      relation(poly:"${polygonString}")["amenity"="parking"];
       
       // Roads (general query for all types of roads)
-      way["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
-      relation["highway"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
+      way(poly:"${polygonString}")["highway"];
+      relation(poly:"${polygonString}")["highway"];
     );
     out body; >; out skel qt;`;
     
@@ -316,7 +320,8 @@ export default function MapPage({ handleGroundClick }) {
       }
   
       const data = await response.json();
-      return processOverpassApiResponse(data);
+
+        return processOverpassApiResponse(data);    
     } catch (error) {
       console.error('Error fetching detailed area data:', error);
       return []; 
@@ -348,22 +353,24 @@ export default function MapPage({ handleGroundClick }) {
     return features;
 }
 
+const roadRelatedTypes = [ 'road', 'highway', 'motorway', 'motorway_link', 'service', 'tertiary', 'secondary', 'trunk_link', 'trunk', 'unclassified', 'primary', 'secondary_link', 'cycleway', 'footway', 'abandoned', 'light_rail', 'rail', 'second_hand' ];
 
-  function isPointInPolygon(point, polygon) {
-    let x = point[0], y = point[1];
-  
-    let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      let xi = polygon[i][0], yi = polygon[i][1];
-      let xj = polygon[j][0], yj = polygon[j][1];
-  
-      let intersect = ((yi > y) != (yj > y))
-          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-  
-    return inside;
+function isPointInPolygon(point, polygon) {
+
+  let x = point[0], y = point[1];
+
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    let xi = polygon[i][0], yi = polygon[i][1];
+    let xj = polygon[j][0], yj = polygon[j][1];
+
+    let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
+
+  return inside;
+}
+
   
   
   function determineAreaType(segment, areaData) {
@@ -397,6 +404,7 @@ export default function MapPage({ handleGroundClick }) {
 
     if (layerType === 'polygon') {
       layer.setStyle({ color: 'black' });
+      setCoordinates(layer.getLatLngs()[0]);
       setLayer(layer);
     }
     if ([ 'circle', 'circlemarker','marker'].includes(layerType)) {
@@ -410,10 +418,31 @@ export default function MapPage({ handleGroundClick }) {
     }
   };
 
-  function determineColor(areaType) {
 
-    return colorMapping[areaType] || colorMapping.default;
+  function isRoadInsideParkingArea(roadSegment, parkingAreas) {
+    return parkingAreas.some(parkingArea => {
+
+
+      return roadSegment.every(point => {
+        return isPointInPolygon(parkingArea, point );
+      });
+    });
   }
+  
+  function determineColor(areaType, segmentCoordinates, parkingAreas) {
+    if (areaType.includes('parking')) {
+      return 'darkorange';
+    } else if (isRoadInsideParkingArea(segmentCoordinates, parkingAreas)) {
+      console.log('isRoadInsideParkingArea', areaType)
+      return 'darkorange'; 
+    } else if (areaType.includes('road') || areaType.includes('highway')) {
+      return 'red';
+    }
+
+    console.log(areaType);
+    return colorMapping[areaType] || colorMapping.default;
+  }  
+  
   
   function segmentRectangle(detailedAreaData) {
   
@@ -485,7 +514,8 @@ export default function MapPage({ handleGroundClick }) {
   
       const newPolygons = segments.map(segment => {
         const areaType = determineAreaType(segment);
-        const color = determineColor(areaType);
+        const parkingArea = detailedAreaData.find(area => area.type === 'parking');
+        const color = determineColor(areaType, segment.coordinates, parkingArea ? parkingArea.coordinates : []);
         return {
           positions: segment.coordinates,
           color: color,
