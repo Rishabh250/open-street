@@ -394,6 +394,8 @@ function isPointInPolygon(point, polygon) {
   
   const onCreated = async (e) => {
     setCoordinates(null);
+    setLayer(null);
+    setPolygons([]);
     const { layerType, layer } = e;
 
     if (layerType === 'polyline') {
@@ -439,7 +441,6 @@ function isPointInPolygon(point, polygon) {
       return 'red';
     }
 
-    console.log(areaType);
     return colorMapping[areaType] || colorMapping.default;
   }  
   
@@ -487,6 +488,11 @@ function isPointInPolygon(point, polygon) {
   const handleGroundDetails = async ({ fetchedLayers }) => {
 
     setIsLoading(true);
+    setAreaData(null);
+    setPolygons([]);
+    setRiskScore(null);
+    setFlightTime(null);
+    
 
     const layer = layers || fetchedLayers;
 
@@ -611,7 +617,6 @@ function isPointInPolygon(point, polygon) {
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <FeatureGroup>
             <EditControl
-              position="topright"
               onCreated={onCreated}
               draw={{
                 rectangle: false,
