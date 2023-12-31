@@ -38,7 +38,7 @@ export default function MapPage({ handleGroundClick }) {
   const [polygons, setPolygons] = useState([]);
   const [flightPath, setFlightPath] = useState(null);
   const [areaData, setAreaData] = useState(null);
-  const [riskScore, setRiskScore] = useState(null);
+  const [riskScore, setRiskScore] = useState(1);
   const [flightTime, setFlightTime] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [layersCord, setLayerCord] = useState(null);
@@ -85,6 +85,8 @@ export default function MapPage({ handleGroundClick }) {
 
   
   const colorMapping = {
+    cable: 'blue',
+    water_tower: 'blue',
     road: 'red',
     motorway: 'red',
     motorway_link: 'red',
@@ -96,7 +98,6 @@ export default function MapPage({ handleGroundClick }) {
     primary: 'red',
     secondary_link: 'red',
     cycleway: 'red',
-    footway: 'red',
     abandoned: 'red',
     light_rail: 'red',
     rail: 'red',
@@ -136,6 +137,7 @@ export default function MapPage({ handleGroundClick }) {
     animal_keeping: 'green',
     greenhouse_horticulture: 'green',
     bed: 'green',
+    river: 'green',
     infrastructure: 'darkgrey',
     jail: 'darkgrey',
     stadium: 'darkgrey',
@@ -152,9 +154,15 @@ export default function MapPage({ handleGroundClick }) {
     hospital: 'white',
     default: 'transparent'
   };
+
+  const mainCategories = {
+    'Roads': 'red',
+    'Commercial and Residential': 'yellow',
+    'Critical facilities': 'darkgrey',
+    'Critical infrastructure': 'black',
+    'Parks and open spaces': 'green'
+  };
   
-
-
   const riskWeights = {
     road: 1.5,
     residential: 1.2,
@@ -216,7 +224,6 @@ export default function MapPage({ handleGroundClick }) {
     primary: 1.4,
     secondary_link: 1.3,
     cycleway: 0.9,
-    footway: 0.9,
     abandoned: 1.0,
     light_rail: 1.6,
     rail: 1.6,
@@ -300,6 +307,25 @@ export default function MapPage({ handleGroundClick }) {
       // Roads (general query for all types of roads)
       way(poly:"${polygonString}")["highway"];
       relation(poly:"${polygonString}")["highway"];
+
+      // Power cables
+      way(poly:"${polygonString}")["power"="cable"];
+      relation(poly:"${polygonString}")["power"="cable"];
+
+      // Power lines
+      way(poly:"${polygonString}")["power"="line"];
+      relation(poly:"${polygonString}")["power"="line"];
+
+      // Power towers
+      node(poly:"${polygonString}")["power"="tower"];
+      way(poly:"${polygonString}")["power"="tower"];
+      relation(poly:"${polygonString}")["power"="tower"];
+
+      // Water Towers
+      node(poly:"${polygonString}")["man_made"="water_tower"];
+      way(poly:"${polygonString}")["man_made"="water_tower"];
+      relation(poly:"${polygonString}")["man_made"="water_tower"];
+      
     );
     out body; >; out skel qt;`;
     
@@ -321,7 +347,7 @@ export default function MapPage({ handleGroundClick }) {
   
       const data = await response.json();
 
-        return processOverpassApiResponse(data);    
+      return processOverpassApiResponse(data);    
     } catch (error) {
       console.error('Error fetching detailed area data:', error);
       return []; 
@@ -332,7 +358,7 @@ export default function MapPage({ handleGroundClick }) {
     let features = [];
 
     const types = ['landuse', 'highway', 'amenity', 'natural', 'leisure', 'building', 'railway', 'aeroway', 'waterway', 'tourism', 'historic', 'shop', 
-    'amenity', 'hospital', 'parking', 'highway'];
+    'amenity', 'hospital', 'parking', 'highway', 'power', 'man_made'];
     types.forEach(type => {
         const elements = data.elements.filter(element => element.type === 'way' && element.tags && element.tags[type]);
         elements.forEach(element => {
@@ -352,8 +378,6 @@ export default function MapPage({ handleGroundClick }) {
 
     return features;
 }
-
-const roadRelatedTypes = [ 'road', 'highway', 'motorway', 'motorway_link', 'service', 'tertiary', 'secondary', 'trunk_link', 'trunk', 'unclassified', 'primary', 'secondary_link', 'cycleway', 'footway', 'abandoned', 'light_rail', 'rail', 'second_hand' ];
 
 function isPointInPolygon(point, polygon) {
 
@@ -394,8 +418,6 @@ function isPointInPolygon(point, polygon) {
   
   const onCreated = async (e) => {
     setCoordinates(null);
-    setLayer(null);
-    setPolygons([]);
     const { layerType, layer } = e;
 
     if (layerType === 'polyline') {
@@ -405,6 +427,9 @@ function isPointInPolygon(point, polygon) {
     }
 
     if (layerType === 'polygon') {
+      setLayer(null);
+      setPolygons([]);
+
       layer.setStyle({ color: 'black' });
       setCoordinates(layer.getLatLngs()[0]);
       setLayer(layer);
@@ -440,6 +465,8 @@ function isPointInPolygon(point, polygon) {
     } else if (areaType.includes('road') || areaType.includes('highway')) {
       return 'red';
     }
+
+    console.log('areaType', areaType)
 
     return colorMapping[areaType] || colorMapping.default;
   }  
@@ -518,15 +545,34 @@ function isPointInPolygon(point, polygon) {
       setAreaData(detailedAreaData);
       const segments = segmentRectangle(detailedAreaData);
   
-      const newPolygons = segments.map(segment => {
-        const areaType = determineAreaType(segment);
-        const parkingArea = detailedAreaData.find(area => area.type === 'parking');
-        const color = determineColor(areaType, segment.coordinates, parkingArea ? parkingArea.coordinates : []);
+      const newPolygons = segments.map((segment) => {
+        const isInside = segment.coordinates.every(coord => {
+         return coord.every(point => {
+
+          if (['motorway', 'service'].includes(segment.type)) {
+            return true;
+          }
+
+            return isPointInPolygon(point, coordinates.map(coord => [coord.lat, coord.lng]));
+          });
+        });
+      
+        console.log(`Segment ${segment.type}: Inside - ${isInside}`);
+      
+        let color = 'transparent'; // default color
+        if (isInside) {
+          const areaType = determineAreaType(segment);
+          const parkingArea = detailedAreaData.find(area => area.type === 'parking');
+          color = determineColor(areaType, segment.coordinates, parkingArea ? parkingArea.coordinates : []);
+        }
+      
         return {
           positions: segment.coordinates,
           color: color,
         };
       });
+            
+      
   
       setPolygons(newPolygons);
       setIsLoading(false);
@@ -611,7 +657,7 @@ function isPointInPolygon(point, polygon) {
 
   return (
     <div className="h-screen flex-col items-center justify-center bg-white">
-      <div className="flex flex-col w-full h-[60%]">
+      <div className="flex flex-col w-full h-[90%]">
       <MapContainer center={[51.505, -0.09]} zoom={13} className="flex-grow">
           <Search />
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -651,10 +697,10 @@ function isPointInPolygon(point, polygon) {
  <pre className="bg-gray-200 p-4 rounded-md overflow-auto w-full">
   <div className='grid grid-cols-6 md:grid-cols-4 gap-4 w-full'>
     {
-      colorMapping && Object.keys(colorMapping).map((key, index) => (
+      Object.keys(mainCategories).map((category, index) => (
         <div key={index} className="flex flex-col">
-          <div className="w-4 h-4 rounded-full mb-1" style={{ backgroundColor: colorMapping[key] }}></div>
-          <p className="text-xs whitespace-normal">{key}</p>
+          <div className="w-4 h-4 rounded-full mb-1" style={{ backgroundColor: mainCategories[category] }}></div>
+          <p className="text-xs whitespace-normal">{category}</p>
         </div>
       ))
     }
