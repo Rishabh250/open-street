@@ -457,15 +457,6 @@ function isPointInPolygon(point, polygon) {
   }
   
   function determineColor(areaType, segmentCoordinates, parkingAreas) {
-    if (areaType.includes('parking')) {
-      return 'darkorange';
-    } else if (isRoadInsideParkingArea(segmentCoordinates, parkingAreas)) {
-      console.log('isRoadInsideParkingArea', areaType)
-      return 'darkorange'; 
-    } else if (areaType.includes('road') || areaType.includes('highway')) {
-      return 'red';
-    }
-
     console.log('areaType', areaType)
 
     return colorMapping[areaType] || colorMapping.default;
@@ -473,27 +464,20 @@ function isPointInPolygon(point, polygon) {
   
   
   function segmentRectangle(detailedAreaData) {
+    let coordinatesWithType = [];
   
-    const segmentsByType = detailedAreaData.reduce((acc, area) => {
-      if (!acc[area.type]) {
-        acc[area.type] = [];
-      }
-  
-      acc[area.type].push(area.coordinates);
-  
-      return acc;
-    }, {});
-  
-    const segments = Object.entries(segmentsByType).map(([type, coordinatesArray]) => {
-  
-      return {
-        type: type,
-        coordinates: coordinatesArray,
-      };
+    detailedAreaData.forEach(area => {
+      area.coordinates.forEach(coord => {
+        coordinatesWithType.push({
+          type: area.type, // Each coordinate now knows its segment's type
+          coordinate: coord,
+        });
+      });
     });
   
-    return segments;
+    return coordinatesWithType;
   }
+  
 
   const convertToLatLngBounds = (boundsData) => {
     if (!boundsData || !boundsData._southWest || !boundsData._northEast) {
@@ -543,36 +527,25 @@ function isPointInPolygon(point, polygon) {
 
       const detailedAreaData = await fetchDetailedAreaData(latLngBounds);
       setAreaData(detailedAreaData);
-      const segments = segmentRectangle(detailedAreaData);
-  
-      const newPolygons = segments.map((segment) => {
-        const isInside = segment.coordinates.every(coord => {
-         return coord.every(point => {
+   
+      const detailedCoordinates = segmentRectangle(detailedAreaData);
 
-          if (['motorway', 'service'].includes(segment.type)) {
-            return true;
-          }
-
-            return isPointInPolygon(point, coordinates.map(coord => [coord.lat, coord.lng]));
-          });
-        });
-      
-        console.log(`Segment ${segment.type}: Inside - ${isInside}`);
-      
-        let color = 'transparent'; // default color
+      const newPolygons = detailedCoordinates.map(({ coordinate, type }) => {
+        const isInside = isPointInPolygon(coordinate, coordinates.map(coord => [coord.lat, coord.lng]));
+    
+        let color = 'transparent'; // Default color
         if (isInside) {
-          const areaType = determineAreaType(segment);
-          const parkingArea = detailedAreaData.find(area => area.type === 'parking');
-          color = determineColor(areaType, segment.coordinates, parkingArea ? parkingArea.coordinates : []);
+          // Use the type of the segment to determine the color
+          color = determineColor(type, coordinate);
         }
-      
+
+        const positions = [ coordinate ];
+    
         return {
-          positions: segment.coordinates,
+          position: positions,
           color: color,
         };
       });
-            
-      
   
       setPolygons(newPolygons);
       setIsLoading(false);
@@ -672,9 +645,15 @@ function isPointInPolygon(point, polygon) {
                 marker: false,
               }}
             />
-            {polygons.map((poly, index) => (
-              <Polygon key={index} positions={poly.positions} color={poly.color} />
-            ))}
+            {polygons.map((poly, index) => {
+              return (
+                <Polygon
+                  key={index}
+                  positions={poly.position}
+                  pathOptions={{ color: poly.color }}
+                />
+              );
+            })}
           </FeatureGroup>
         </MapContainer>
         <div className="p-4 bg-gray-100">           

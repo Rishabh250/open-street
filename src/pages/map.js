@@ -74,7 +74,7 @@ const MapPage = () => {
             </button>
           </div>
         ) : (
-          <p className="text-center">No user details available.</p>
+          <></>
         )}
       </div>
       <div className="flex-grow">
