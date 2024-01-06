@@ -87,21 +87,15 @@ export default function MapPage({ handleGroundClick }) {
   const colorMapping = {
     cable: 'blue',
     water_tower: 'blue',
-    road: 'red',
     motorway: 'red',
     motorway_link: 'red',
-    service: 'red',
+    service: 'pink',
     tertiary: 'red',
     trunk_link: 'red',
     trunk: 'red',
     unclassified: 'red',
     primary: 'red',
     secondary_link: 'red',
-    cycleway: 'red',
-    abandoned: 'red',
-    light_rail: 'red',
-    rail: 'red',
-    second_hand: 'red',
     residential: 'yellow',
     commercial: 'yellow',
     retail: 'yellow',
@@ -116,7 +110,7 @@ export default function MapPage({ handleGroundClick }) {
     planned_construction: 'yellow',
     brownfield: 'yellow',
     depot: 'yellow',
-    yes: 'yellow',
+    yes: 'transparent',
     secondary: 'yellow',
     park: 'green',
     pond: 'green',
@@ -526,28 +520,24 @@ function isPointInPolygon(point, polygon) {
       const latLngBounds = convertToLatLngBounds(bounds) || bounds;
 
       const detailedAreaData = await fetchDetailedAreaData(latLngBounds);
-      setAreaData(detailedAreaData);
-   
-      const detailedCoordinates = segmentRectangle(detailedAreaData);
+    setAreaData(detailedAreaData);
 
-      const newPolygons = detailedCoordinates.map(({ coordinate, type }) => {
-        const isInside = isPointInPolygon(coordinate, coordinates.map(coord => [coord.lat, coord.lng]));
-    
-        let color = 'transparent'; // Default color
-        if (isInside) {
-          // Use the type of the segment to determine the color
-          color = determineColor(type, coordinate);
-        }
+    const newLines = [];
+    detailedAreaData.forEach(area => {
+      const coordinates = area.coordinates;
+      const type = area.type;
+      const color = determineColor(type);
 
-        const positions = [ coordinate ];
-    
-        return {
-          position: positions,
+      for (let i = 0; i < coordinates.length - 1; i++) {
+        const segment = [coordinates[i], coordinates[i + 1]];
+        newLines.push({
+          positions: segment,
           color: color,
-        };
-      });
+        });
+      }
+    });
   
-      setPolygons(newPolygons);
+      setPolygons(newLines);
       setIsLoading(false);
     } catch (error) {
       console.error('Error while getting ground profile:', error);
@@ -648,9 +638,9 @@ function isPointInPolygon(point, polygon) {
             {polygons.map((poly, index) => {
               return (
                 <Polygon
-                  key={index}
-                  positions={poly.position}
-                  pathOptions={{ color: poly.color }}
+                key={index}
+                positions={poly.positions}
+                color={poly.color}
                 />
               );
             })}
