@@ -89,7 +89,7 @@ export default function MapPage({ handleGroundClick }) {
     water_tower: 'blue',
     motorway: 'red',
     motorway_link: 'red',
-    service: 'pink',
+    service: 'yellow',
     tertiary: 'red',
     trunk_link: 'red',
     trunk: 'red',
@@ -98,7 +98,7 @@ export default function MapPage({ handleGroundClick }) {
     secondary_link: 'red',
     residential: 'yellow',
     commercial: 'yellow',
-    retail: 'yellow',
+    retail: 'red',
     governmental: 'yellow',
     village_green: 'yellow',
     courtyard: 'yellow',
@@ -111,7 +111,7 @@ export default function MapPage({ handleGroundClick }) {
     brownfield: 'yellow',
     depot: 'yellow',
     yes: 'transparent',
-    secondary: 'yellow',
+    secondary: 'red',
     park: 'green',
     pond: 'green',
     farmland: 'green',
@@ -388,9 +388,6 @@ function isPointInPolygon(point, polygon) {
 
   return inside;
 }
-
-  
-  
   function determineAreaType(segment, areaData) {
 
     if ( areaData ) {
@@ -434,7 +431,7 @@ function isPointInPolygon(point, polygon) {
     }
     if (layerType === 'polyline') {
       const latlngs = layer.getLatLngs();
-      layer.setStyle({ color: 'black' });
+      layer.setStyle({ color: 'grey' });
       setCoordinates(latlngs.map((latlng) => [latlng.lat, latlng.lng]));
     }
   };
