@@ -436,40 +436,13 @@ function isPointInPolygon(point, polygon) {
     }
   };
 
-
-  function isRoadInsideParkingArea(roadSegment, parkingAreas) {
-    return parkingAreas.some(parkingArea => {
-
-
-      return roadSegment.every(point => {
-        return isPointInPolygon(parkingArea, point );
-      });
-    });
-  }
   
-  function determineColor(areaType, segmentCoordinates, parkingAreas) {
+  function determineColor(areaType) {
     console.log('areaType', areaType)
 
     return colorMapping[areaType] || colorMapping.default;
   }  
   
-  
-  function segmentRectangle(detailedAreaData) {
-    let coordinatesWithType = [];
-  
-    detailedAreaData.forEach(area => {
-      area.coordinates.forEach(coord => {
-        coordinatesWithType.push({
-          type: area.type, // Each coordinate now knows its segment's type
-          coordinate: coord,
-        });
-      });
-    });
-  
-    return coordinatesWithType;
-  }
-  
-
   const convertToLatLngBounds = (boundsData) => {
     if (!boundsData || !boundsData._southWest || !boundsData._northEast) {
       console.error("Invalid bounds data: missing properties");
@@ -517,21 +490,20 @@ function isPointInPolygon(point, polygon) {
       const latLngBounds = convertToLatLngBounds(bounds) || bounds;
 
       const detailedAreaData = await fetchDetailedAreaData(latLngBounds);
-    setAreaData(detailedAreaData);
+      setAreaData(detailedAreaData);
 
-    const newLines = [];
-    detailedAreaData.forEach(area => {
+      const newLines = [];
+      detailedAreaData.forEach(area => {
       const coordinates = area.coordinates;
       const type = area.type;
       const color = determineColor(type);
 
-      for (let i = 0; i < coordinates.length - 1; i++) {
-        const segment = [coordinates[i], coordinates[i + 1]];
+     
         newLines.push({
-          positions: segment,
+          positions: coordinates,
           color: color,
+          fillColor: color,
         });
-      }
     });
   
       setPolygons(newLines);
@@ -632,15 +604,22 @@ function isPointInPolygon(point, polygon) {
                 marker: false,
               }}
             />
-            {polygons.map((poly, index) => {
-              return (
-                <Polygon
-                key={index}
-                positions={poly.positions}
-                color={poly.color}
-                />
-              );
-            })}
+          {polygons.map((poly, index) => {
+  return (
+    <Polygon
+      key={index}
+      positions={poly.positions}
+      pathOptions={{
+        fillColor: poly.color,
+        fillOpacity: 1,
+        weight: 1,
+        color: poly.color,
+        opacity: 1
+      }} 
+    />
+  );
+})}
+
           </FeatureGroup>
         </MapContainer>
         <div className="p-4 bg-gray-100">           

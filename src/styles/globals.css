@@ -26,3 +26,39 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Map */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+@media screen and (max-width: 991px) {
+  .leaflet-container {
+    height: 550px;
+  }
+}
+
+/* Popup */
+.popup {
+  color: #0e98e7;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+}
+.popup-img {
+  height: 80px;
+  width: auto;
+}
+
+/* Button */
+.App-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.App-header button {
+  padding: 20px 30px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
