@@ -11,7 +11,7 @@ const provider = new GoogleAuthProvider();
 
 const GoogleLogin = () => {
 
-    const router = useRouter();
+  const router = useRouter();
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -22,7 +22,7 @@ const GoogleLogin = () => {
       }
 
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+      console.error('Error signing in with Google:', error);
       // Handle errors here
     }
   };
