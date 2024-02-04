@@ -62,6 +62,7 @@ module.exports = {
     parking: 'darkorange',
     hospital: 'white',
     landuse: 'yellow',
+    golf_course: 'green',
     default: 'transparent'
   },
   MAIN_CATEGORIES: {
@@ -139,7 +140,7 @@ module.exports = {
     default: 1.0
   },
   LAND_TYPES: [ 'landuse', 'highway', 'amenity', 'natural', 'leisure', 'building', 'railway', 'aeroway', 'waterway', 'tourism', 'historic', 'shop',
-    'amenity', 'hospital', 'parking', 'highway', 'power', 'man_made' ],
+    'amenity', 'hospital', 'parking', 'highway', 'power', 'man_made', 'golf_course' ],
   API_QUERY: ({ polygonString }) => `[out:json][timeout:25];
   (
     // Primary roads within the bounding box
@@ -229,6 +230,10 @@ module.exports = {
     node(poly:"${polygonString}")["man_made"="water_tower"];
     way(poly:"${polygonString}")["man_made"="water_tower"];
     relation(poly:"${polygonString}")["man_made"="water_tower"];
+
+    //Leisure areas
+    way(poly:"${polygonString}")["leisure"];
+    relation(poly:"${polygonString}")["leisure"];
     
   );
   out body; >; out skel qt;`
