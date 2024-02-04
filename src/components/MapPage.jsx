@@ -6,7 +6,7 @@ import 'leaflet-geosearch/assets/css/leaflet.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
-import { API_QUERY, COLOR_MAPPING, LAND_TYPES, MAIN_CATEGORIES, RISK_WEIGHTS, ROAD_CATEGORIES } from '@/utils/constant';
+import { API_QUERY, COLOR_MAPPING, LAND_TYPES, MAIN_CATEGORIES, RISK_WEIGHTS } from '@/utils/constant';
 
 let EditControl;
 if (typeof window !== 'undefined') {
