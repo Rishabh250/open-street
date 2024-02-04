@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import { stringify } from 'flatted';
 
 const DynamicMapWithNoSSR = dynamic(() => import('../components/MapPage'), {
   ssr: false

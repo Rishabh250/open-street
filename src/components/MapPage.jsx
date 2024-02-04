@@ -56,6 +56,12 @@ export default function MapPage({ handleGroundClick }) {
         }).filter(coord => !!coord);
 
         if (coordinates.length > 0) {
+          if (element.tags && element.tags.landuse) {
+            features.push({
+              type: 'landuse',
+              coordinates: coordinates
+            });
+          }
           features.push({
             type: element.tags[type],
             coordinates: coordinates
@@ -219,11 +225,26 @@ export default function MapPage({ handleGroundClick }) {
         const type = area.type;
         const color = determineColor(type);
 
-        newLines.push({
-          positions: coordinates,
-          color: color,
-          opacity: [ 'red', 'blue' ].includes(color) ? 0 : 0.8
-        });
+        const isRedColor = [ 'red', 'blue' ].includes(color);
+
+        if (isRedColor) {
+          for (let i = 0; i < coordinates.length - 1; i++) {
+            const segment = [ coordinates[i], coordinates[i + 1] ];
+
+            newLines.push({
+              positions: segment,
+              color: color,
+              opacity: 0
+            });
+          }
+        } else {
+          newLines.push({
+            positions: coordinates,
+            color: color,
+            opacity: 0.8
+          });
+        }
+
       });
 
       setPolygons(newLines);

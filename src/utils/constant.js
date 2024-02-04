@@ -4,15 +4,15 @@ module.exports = {
     water_tower: 'blue',
     motorway: 'red',
     motorway_link: 'red',
-    service: 'yellow',
+    service: 'red',
     tertiary: 'red',
     trunk_link: 'red',
     trunk: 'red',
     unclassified: 'red',
     primary: 'red',
     secondary_link: 'red',
-    residential: 'yellow',
-    commercial: 'yellow',
+    residential: 'red',
+    commercial: 'red',
     retail: 'red',
     governmental: 'yellow',
     village_green: 'yellow',
@@ -61,6 +61,7 @@ module.exports = {
     dead_allotments: 'darkgrey',
     parking: 'darkorange',
     hospital: 'white',
+    landuse: 'yellow',
     default: 'transparent'
   },
   MAIN_CATEGORIES: {
@@ -196,6 +197,7 @@ module.exports = {
     // Shop data
     way(poly:"${polygonString}")["shop"];
     relation(poly:"${polygonString}")["shop"];
+
     // Hospitals
     node(poly:"${polygonString}")["amenity"="hospital"];
     way(poly:"${polygonString}")["amenity"="hospital"];
