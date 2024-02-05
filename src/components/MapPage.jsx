@@ -20,7 +20,8 @@ const Search = () => {
       const provider = new OpenStreetMapProvider();
       const searchControl = new GeoSearchControl({
         provider,
-        style: 'bar'
+        style: 'bar',
+        searchLabel: 'Enter address'
       });
       map.addControl(searchControl);
 
@@ -37,8 +38,8 @@ export default function MapPage({ handleGroundClick }) {
   const [ layers, setLayer ] = useState(null);
   const [ polygons, setPolygons ] = useState([]);
   const [ areaData, setAreaData ] = useState(null);
-  const [ riskScore, setRiskScore ] = useState(1);
-  const [ flightTime, setFlightTime ] = useState(null);
+  const [ riskScore, setRiskScore ] = useState(0);
+  const [ flightTime, setFlightTime ] = useState(0);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ layersCord, setLayerCord ] = useState(null);
 
@@ -207,13 +208,14 @@ export default function MapPage({ handleGroundClick }) {
     setIsLoading(true);
     setAreaData(null);
     setPolygons([]);
-    setRiskScore(null);
-    setFlightTime(null);
+    setRiskScore(0);
+    setFlightTime(0);
 
     const layer = layers || fetchedLayers;
 
     if (!layer) {
       alert('Please draw a shape on the map first.');
+      setIsLoading(false);
 
       return;
     }
@@ -246,18 +248,16 @@ export default function MapPage({ handleGroundClick }) {
           for (let i = 0; i < areaCoordinates.length - 1; i++) {
             const segment = [ areaCoordinates[i], areaCoordinates[i + 1] ];
 
-            let isInside = false;
-
             segment.forEach((cord)=>{
-              isInside = isPointInPolygon(cord, coordinates.map(coord => [ coord.lat, coord.lng ]));
-            });
+              const isInside = isPointInPolygon(cord, coordinates.map(coord => [ coord.lat, coord.lng ]));
 
-            if (!isInside) return;
-
-            newLines.push({
-              positions: segment,
-              color: color,
-              opacity: 0
+              if (isInside) {
+                newLines.push({
+                  positions: [ cord, segment[1] ],
+                  color: color,
+                  opacity: 0.8
+                });
+              }
             });
           }
         } else {
@@ -362,11 +362,17 @@ export default function MapPage({ handleGroundClick }) {
   };
 
   return (
-    <div className="h-screen flex-col items-center justify-center bg-white">
-      <div className="flex flex-col w-full h-[90%]">
-        <MapContainer center={[ 51.505, -0.09 ]} zoom={13} className="flex-grow">
+    <div className="h-screen flex-col items-center justify-center bg-white relative">
+      {isLoading &&
+          <div className="absolute top-0 left-0 w-full h-[80%] flex flex-col items-center justify-center bg-black bg-opacity-50 z-10">
+            <div class="lds-default"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <p className="text-white mt-4">Getting Ground Profile...</p>
+          </div>
+      }
+      <div className={`flex flex-col w-full h-[80%] relative ${isLoading ? 'opacity-40' : ''}`}>
+        <MapContainer center={[ 32.6401, -117.0842 ]} zoom={15}>
           <Search />
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
           <FeatureGroup>
             <EditControl
               onCreated={onCreated}
@@ -396,24 +402,21 @@ export default function MapPage({ handleGroundClick }) {
             })}
           </FeatureGroup>
         </MapContainer>
-        <div className="p-4 bg-gray-100">
-          <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded" onClick={handleSave}>Save Data</button>
-          <button className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded" onClick={handleDelete}>Delete Data</button>
-          <button className="mt-2 ml-2 px-4 py-2 bg-green-500 text-white rounded" onClick={handleGroundDetails}>Ground Profile</button>
+      </div>
+      <div className="p-4 bg-gray-100 flex justify-between">
+        <div>
+          <p className="text-lg">Risk Score: {riskScore.toFixed(2)}</p>
+          <p className="text-lg">Flight Time: {flightTime.toFixed(2)} seconds</p>
+        </div>
+        <button className="mt-2 ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 ransition-colors duration-300" onClick={handleGroundDetails}>Fetch Ground Profile</button>
+        <div>
+          <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded transition-colors duration-300 hover:bg-blue-700" onClick={handleSave}>Calculate Data</button>
+          <button className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded transition-colors duration-300 hover:bg-red-700" onClick={handleDelete}>Delete Data</button>
         </div>
       </div>
       <div className="flex flex-col w-full max-w-screen-lg mt-4">
-        {isLoading &&
-          <p>Loading Ground Profile...</p>
-        }
-        {riskScore !== null &&
-          <p className="text-lg">Risk Score: {riskScore.toFixed(2)}</p>
-        }
-        {flightTime !== null &&
-          <p className="text-lg">Flight Time: {flightTime.toFixed(2)} seconds</p>
-        }
         <pre className="bg-gray-200 p-4 rounded-md overflow-auto w-full">
-          <div className='grid grid-cols-6 md:grid-cols-4 gap-4 w-full'>
+          <div className='grid grid-cols-6 md:grid-cols-5 gap-4 w-full'>
             {Object.keys(MAIN_CATEGORIES).map((category, index) =>
               <div key={index} className="flex flex-col">
                 <div className="w-4 h-4 rounded-full mb-1" style={{ backgroundColor: MAIN_CATEGORIES[category] }}></div>

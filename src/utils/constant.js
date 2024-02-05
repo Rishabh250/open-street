@@ -63,6 +63,9 @@ module.exports = {
     hospital: 'white',
     landuse: 'yellow',
     golf_course: 'green',
+    waterway: 'darkblue',
+    aeroway: 'darkblue',
+    water: 'darkblue',
     default: 'transparent'
   },
   MAIN_CATEGORIES: {
@@ -137,10 +140,17 @@ module.exports = {
     light_rail: 1.6,
     rail: 1.6,
     second_hand: 1.0,
+    water_tower: 1.0,
+    cable: 1.0,
+    planned_construction: 1.0,
+    yes: 1.0,
+    infrastructure: 1.0,
+    waterway: 1.2,
+    aeroway: 1.1,
     default: 1.0
   },
   LAND_TYPES: [ 'landuse', 'highway', 'amenity', 'natural', 'leisure', 'building', 'railway', 'aeroway', 'waterway', 'tourism', 'historic', 'shop',
-    'amenity', 'hospital', 'parking', 'highway', 'power', 'man_made', 'golf_course' ],
+    'amenity', 'hospital', 'parking', 'highway', 'power', 'man_made', 'golf_course', 'waterway', 'natural' ],
   API_QUERY: ({ polygonString }) => `[out:json][timeout:25];
   (
     // Primary roads within the bounding box
@@ -234,6 +244,14 @@ module.exports = {
     //Leisure areas
     way(poly:"${polygonString}")["leisure"];
     relation(poly:"${polygonString}")["leisure"];
+
+    //Water bodies
+    way(poly:"${polygonString}")["waterway"];
+    relation(poly:"${polygonString}")["waterway"];
+
+    // Water ponds
+    way(poly:"${polygonString}")["natural"="water"];
+    relation(poly:"${polygonString}")["natural"="water"];
     
   );
   out body; >; out skel qt;`
