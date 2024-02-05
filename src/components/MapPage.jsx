@@ -56,7 +56,7 @@ export default function MapPage({ handleGroundClick }) {
         }).filter(coord => !!coord);
 
         if (coordinates.length > 0) {
-          if (element.tags && element.tags.landuse) {
+          if (element.tags && (element.tags.landuse || element.tags.building)) {
             features.push({
               type: 'landuse',
               coordinates: coordinates
@@ -187,6 +187,21 @@ export default function MapPage({ handleGroundClick }) {
     return L.latLngBounds([ boundsData._southWest, boundsData._northEast ]);
   };
 
+  function segmentRectangle(detailedAreaData) {
+    const coordinatesWithType = [];
+
+    detailedAreaData.forEach(area => {
+      area.coordinates.forEach(coord => {
+        coordinatesWithType.push({
+          type: area.type, // Each coordinate now knows its segment's type
+          coordinate: coord
+        });
+      });
+    });
+
+    return coordinatesWithType;
+  }
+
   const handleGroundDetails = async ({ fetchedLayers }) => {
 
     setIsLoading(true);
@@ -221,15 +236,23 @@ export default function MapPage({ handleGroundClick }) {
 
       const newLines = [];
       detailedAreaData.forEach(area => {
-        const coordinates = area.coordinates;
+        const areaCoordinates = area.coordinates;
         const type = area.type;
         const color = determineColor(type);
 
         const isRedColor = [ 'red', 'blue' ].includes(color);
 
         if (isRedColor) {
-          for (let i = 0; i < coordinates.length - 1; i++) {
-            const segment = [ coordinates[i], coordinates[i + 1] ];
+          for (let i = 0; i < areaCoordinates.length - 1; i++) {
+            const segment = [ areaCoordinates[i], areaCoordinates[i + 1] ];
+
+            let isInside = false;
+
+            segment.forEach((cord)=>{
+              isInside = isPointInPolygon(cord, coordinates.map(coord => [ coord.lat, coord.lng ]));
+            });
+
+            if (!isInside) return;
 
             newLines.push({
               positions: segment,
@@ -238,8 +261,16 @@ export default function MapPage({ handleGroundClick }) {
             });
           }
         } else {
+          let isInside = false;
+
+          areaCoordinates.forEach((cord)=>{
+            isInside = isPointInPolygon(cord, coordinates.map(coord => [ coord.lat, coord.lng ]));
+          });
+
+          if (!isInside) return;
+
           newLines.push({
-            positions: coordinates,
+            positions: areaCoordinates,
             color: color,
             opacity: 0.8
           });
@@ -357,7 +388,7 @@ export default function MapPage({ handleGroundClick }) {
                   pathOptions={{
                     fillColor: color,
                     fillOpacity: opacity,
-                    weight: 1,
+                    weight: 2,
                     color: color
                   }}
                 />
