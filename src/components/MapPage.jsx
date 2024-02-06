@@ -261,13 +261,6 @@ export default function MapPage({ handleGroundClick }) {
             });
           }
         } else {
-          let isInside = false;
-
-          areaCoordinates.forEach((cord)=>{
-            isInside = isPointInPolygon(cord, coordinates.map(coord => [ coord.lat, coord.lng ]));
-          });
-
-          if (!isInside) return;
 
           newLines.push({
             positions: areaCoordinates,
