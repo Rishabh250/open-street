@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, FeatureGroup, useMap, Polygon } from 'react-leaflet';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import 'leaflet-geosearch/assets/css/leaflet.css';
@@ -42,6 +42,18 @@ export default function MapPage({ handleGroundClick }) {
   const [ flightTime, setFlightTime ] = useState(0);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ layersCord, setLayerCord ] = useState(null);
+  const [ markArea, setMarkArea ] = useState(false);
+  const [ areaColor, setAreaColor ] = useState('red');
+  const markAreaRef = useRef(markArea);
+  const areaColorRef = useRef(areaColor);
+
+  useEffect(() => {
+    markAreaRef.current = markArea;
+  }, [ markArea ]);
+
+  useEffect(() => {
+    areaColorRef.current = areaColor;
+  }, [ areaColor ]);
 
   const processOverpassApiResponse = (data) => {
     const features = [];
@@ -142,20 +154,30 @@ export default function MapPage({ handleGroundClick }) {
   };
 
   const onCreated = async (e) => {
-    setCoordinates(null);
     const { layerType, layer } = e;
 
-    if (layerType === 'polygon') {
+    if (markAreaRef.current && layerType === 'polygon') {
+      setLayer(null);
+
+      layer.setStyle({ color: areaColorRef.current });
+      setCoordinates(layer.getLatLngs()[0].map((latlng) => [ latlng.lat, latlng.lng ]));
+      setLayer(layer);
+
+      const newLines = {
+        positions: layer.getLatLngs()[0],
+        color: areaColorRef.current,
+        opacity: 0.8
+      };
+      setPolygons((prevPolygons) => [ ...prevPolygons, newLines ]);
+
+    }
+    if (!markAreaRef.current && layerType === 'polygon') {
       setLayer(null);
       setPolygons([]);
 
       layer.setStyle({ color: 'black' });
       setCoordinates(layer.getLatLngs()[0]);
       setLayer(layer);
-    }
-    if ([ 'circle', 'circlemarker', 'marker' ].includes(layerType)) {
-      const { _latlngs } = layer;
-      setCoordinates(_latlngs[0]);
     }
     if (layerType === 'polyline') {
       const latlngs = layer.getLatLngs();
@@ -187,21 +209,6 @@ export default function MapPage({ handleGroundClick }) {
 
     return L.latLngBounds([ boundsData._southWest, boundsData._northEast ]);
   };
-
-  function segmentRectangle(detailedAreaData) {
-    const coordinatesWithType = [];
-
-    detailedAreaData.forEach(area => {
-      area.coordinates.forEach(coord => {
-        coordinatesWithType.push({
-          type: area.type, // Each coordinate now knows its segment's type
-          coordinate: coord
-        });
-      });
-    });
-
-    return coordinatesWithType;
-  }
 
   const handleGroundDetails = async ({ fetchedLayers }) => {
 
@@ -243,6 +250,7 @@ export default function MapPage({ handleGroundClick }) {
         const color = determineColor(type);
 
         const isRedColor = [ 'red', 'blue' ].includes(color);
+        // const isLanduse = type === 'landuse';
 
         if (isRedColor) {
           for (let i = 0; i < areaCoordinates.length - 1; i++) {
@@ -261,7 +269,6 @@ export default function MapPage({ handleGroundClick }) {
             });
           }
         } else {
-
           newLines.push({
             positions: areaCoordinates,
             color: color,
@@ -375,6 +382,7 @@ export default function MapPage({ handleGroundClick }) {
                 circlemarker: false,
                 polyline: true,
                 marker: false
+
               }}
             />
             {polygons.map((poly, index) => {
@@ -402,7 +410,21 @@ export default function MapPage({ handleGroundClick }) {
           <p className="text-lg">Flight Time: {flightTime.toFixed(2)} seconds</p>
         </div>
         <button className="mt-2 ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 ransition-colors duration-300" onClick={handleGroundDetails}>Fetch Ground Profile</button>
-        <div>
+        <div style={{ border: '1px solid black', padding: '10px' }}>
+          <div>
+            <div>
+              <input value={markArea} onChange={(e) => setMarkArea(e.target.checked)} type="checkbox" id="markArea" />
+              <label htmlFor="markArea" className='m-1'>Mark Area</label>
+            </div>
+            <div>
+              <select onChange={(e) => setAreaColor(e.target.value)}>
+                <option value="red">Red</option>
+                <option value="yellow">Yellow</option>
+                <option value="darkgrey">Darkgrey</option>
+                <option value="green">Green</option>
+              </select>
+            </div>
+          </div>
           <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded transition-colors duration-300 hover:bg-blue-700" onClick={handleSave}>Calculate Data</button>
           <button className="mt-2 ml-2 px-4 py-2 bg-red-500 text-white rounded transition-colors duration-300 hover:bg-red-700" onClick={handleDelete}>Delete Data</button>
         </div>
